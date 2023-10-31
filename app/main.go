@@ -12,11 +12,26 @@ func main() {
 	args := os.Args[4:len(os.Args)]
 
 	cmd := exec.Command(command, args...)
-	output, err := cmd.Output()
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	var exitCode int
+
+	err := cmd.Run()
+
 	if err != nil {
-		fmt.Printf("Err: %v", err)
-		os.Exit(1)
+		if exitError, ok := err.(*exec.ExitError); ok {
+			exitCode = exitError.ExitCode()
+		} else {
+			exitCode = 1
+		}
+	} else {
+		exitCode = 0
 	}
 
-	fmt.Println(string(output))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Err: %v", err)
+	}
+
+	os.Exit(exitCode)
 }
